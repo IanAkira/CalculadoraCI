@@ -3,7 +3,7 @@
 
 ## Descrição
 
-Calculadora básica feita em dupla com HenriqueBent0.
+Calculadora básica feita em dupla com HenriqueBent0. Com implementação SonarCloud.
 
 ## Badges
 
