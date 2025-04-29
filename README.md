@@ -3,7 +3,13 @@
 
 ## Descrição
 
-Calculadora básica feita em dupla com HenriqueBent0. Com implementação SonarCloud.
+Calculadora básica feita em dupla com HenriqueBent0.
+
+Utiliza 3 Ambientes:
+
+- dev - Desenvolvimento
+- hmg - Homologação
+- prd - Prdução
 
 ## Badges
 
