@@ -42,27 +42,28 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
     <build>
+        <!-- Plugin do JaCoCo para gerar relatório de cobertura -->
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.6.0</version>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.8</version>
                 <executions>
+                    <!-- Adiciona agente JaCoCo antes dos testes -->
                     <execution>
-                        <phase>package</phase>
+                        <id>prepare-agent</id>
+                        <phase>initialize</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>prepare-agent</goal>
                         </goals>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <mainClass>principal.Principal</mainClass>
-                                </manifest>
-                            </archive>
-                            <descriptorRefs>
-                                <descriptorRef>jar-with-dependencies</descriptorRef>
-                            </descriptorRefs>
-                        </configuration>
+                    </execution>
+                    <!-- Gera relatório após os testes -->
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
