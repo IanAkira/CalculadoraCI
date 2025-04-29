@@ -73,7 +73,7 @@ jobs:
           mvn clean verify \
             org.jacoco:jacoco-maven-plugin:prepare-agent \
             org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.projectKey=IanAkira_CalculadoraPairProgramming \
+            -Dsonar.projectKey=IanAkira_CalculadoraCI \
             -Dsonar.organization=ianakira \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
