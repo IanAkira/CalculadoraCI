@@ -1,56 +1,17 @@
-name: Integração Contínua e Análise de Código com SonarQube
+name: Integração contínua de Java com Maven e SonarCloud
 
 on:
   push:
-    branches: 
-      - main
+    branches: [ main ]
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  # Job para análise do código com SonarQube
-  sonar-analysis:
-    name: Build e Análise com SonarQube
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones devem ser desabilitados para maior relevância na análise
-
-      - name: Configura JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: 'zulu'  # Distribuição alternativa do JDK
-
-      - name: Cache pacotes do SonarQube
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache pacotes Maven
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: Build e Análise de Código
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=IanAkira_CalculadoraPairProgramming
-
-  # Job para o ambiente de desenvolvimento
+  # Jobs do ambiente de desenvolvimento
   build-dev:
     runs-on: ubuntu-latest
     environment:
       name: dev
-    needs: sonar-analysis  # Depende da análise do SonarQube
-
     steps:
       - name: Realiza o checkout do repositório
         uses: actions/checkout@v3
@@ -65,13 +26,12 @@ jobs:
       - name: Compila o projeto com Maven
         run: mvn -B compile --file pom.xml
 
-  # Job para o ambiente de homologação
+  # Jobs do ambiente de homologação
   build-hmg:
     runs-on: ubuntu-latest
     environment:
       name: hmg
-    needs: build-dev  # Depende da build do ambiente de desenvolvimento
-
+    needs: build-dev
     steps:
       - name: Realiza o checkout do repositório
         uses: actions/checkout@v3
@@ -88,13 +48,43 @@ jobs:
       - name: Testa o projeto com Maven
         run: mvn -B test --file pom.xml
 
-  # Job para o ambiente de produção
+      # Cache dos pacotes do SonarCloud
+      - name: Cache dos pacotes do SonarCloud
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      # Cache dos pacotes do Maven
+      - name: Cache dos pacotes do Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      # Verifica o projeto com Maven e Jacoco
+      - name: Verifica o projeto com Maven e Jacoco
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn clean verify \
+            org.jacoco:jacoco-maven-plugin:prepare-agent \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=IanAkira_CalculadoraPairProgramming \
+            -Dsonar.organization=ianakira \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
+  # Jobs do ambiente de produção
   build-prd:
     runs-on: ubuntu-latest
     environment:
       name: prd
-    needs: build-hmg  # Depende da build de homologação
-
+    needs: build-hmg
     steps:
       - name: Realiza o checkout do repositório
         uses: actions/checkout@v3
@@ -106,37 +96,20 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      # Empacotamento do projeto com Maven
       - name: Empacota o projeto com Maven
         run: mvn -B package --file pom.xml -DskipTests
 
-      # Executa os passos da análise do código com o SonarQube
-      - name: Cache dos pacotes do SonarQube
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache dos pacotes do Maven
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: Verifica o projeto com Maven e Jacoco
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=CalculadoraPairProgramming
-
-      - name: Crie uma pasta temporária para download de artefatos
+      # Cria uma pasta temporária de downloads de artefatos.
+      - name: Crie uma pasta temporária de downloads de artefatos
         run: mkdir staging
 
-      - name: Copia os artefatos a serem publicados para a pasta temporária
+      # Copia os artefatos a serem publicados na pasta temporária
+      - name: Copia os artefatos a serem publicados na pasta temporária
         run: cp target/*jar-with-dependencies.jar staging
 
-      - name: Upload de artefatos usando GitHub Actions
+      # Usa Upload Artifact do GitHub Action
+      - name: Usa Upload Artifact do GitHub Action
         uses: actions/upload-artifact@v4
         with:
           name: Package
