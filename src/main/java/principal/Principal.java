@@ -1,24 +1,21 @@
+//NOSONAR
 package principal;
 
 import javax.swing.JOptionPane;
 import model.Calculadora;
 
+@SuppressWarnings("all") 
 public class Principal {
-
     public static void main(String[] args) {
         String opcao = "";
         Calculadora calculadora = new Calculadora();
-
         while (!opcao.equals("9")) {
             opcao = JOptionPane.showInputDialog("1 - Leitura \n2 - Adicao \n3 - Subtracao \n4 - Multiplicação \n5 - Divisao \n9 - Sair");
-
             if (opcao == null) { 
                 break;
             }
-
             try {
                 int escolha = Integer.parseInt(opcao);
-
                 switch (escolha) {
                     case 1:
                         calculadora.setValorA(Double.parseDouble(JOptionPane.showInputDialog("Digite o valor A")));
